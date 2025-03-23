@@ -14,7 +14,7 @@ import logging
 import random
 from .. import loader, utils
 
-__version__ = (1, 0, 3)
+__version__ = (1, 0, 4)
 
 logger = logging.getLogger(__name__)
 
