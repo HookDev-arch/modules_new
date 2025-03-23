@@ -6,9 +6,9 @@
 # ░███    ░███ ░███ ░███░███ ░███ ░███░░███  ░███    ███ ░███░░░   ░░███ ███              ███░░███  ░███     ░███  ███ ░███ ░███ 
 # █████   █████░░██████ ░░██████  ████ █████ ██████████  ░░██████   ░░█████              ░░████████ █████    ░░██████  ████ █████
 #░░░░░   ░░░░░  ░░░░░░   ░░░░░░  ░░░░ ░░░░░ ░░░░░░░░░░    ░░░░░░     ░░░░░                ░░░░░░░░ ░░░░░      ░░░░░░  ░░░░ ░░░░░                                                                                                                                 
-# meta developer: @wiley_station
+# meta developer: @hookdev_arch
 # meta icon: https://example.com/moodmirror_icon.png
-# meta banner: https://example.com/moodmirror_banner.png
+# meta banner: https://i.yapx.ru/Yk4OQ.jpg
 
 import logging
 import random
@@ -16,7 +16,7 @@ import datetime
 from hikkatl.tl.functions.channels import CreateChannelRequest
 from .. import loader, utils
 
-__version__ = (0, 0, 2)
+__version__ = (1, 0, 2)
 
 logger = logging.getLogger(__name__)
 

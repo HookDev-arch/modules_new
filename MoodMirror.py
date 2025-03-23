@@ -8,13 +8,13 @@
 #░░░░░   ░░░░░  ░░░░░░   ░░░░░░  ░░░░ ░░░░░ ░░░░░░░░░░    ░░░░░░     ░░░░░                ░░░░░░░░ ░░░░░      ░░░░░░  ░░░░ ░░░░░                                                                                                                                 
 # meta developer: @wiley_station
 # meta icon: https://example.com/moodmirror_icon.png
-# meta banner: https://example.com/moodmirror_banner.png
+# meta banner: https://i.yapx.ru/Yk4OQ.jpg
 
 import logging
 import random
 from .. import loader, utils
 
-__version__ = (0, 0, 2)
+__version__ = (1, 0, 3)
 
 logger = logging.getLogger(__name__)
 
