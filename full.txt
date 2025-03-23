@@ -1,2 +1,7 @@
 ideacatcher
 moodmirror
+rpmod
+serverinfo
+weather
+ymnow
+quotes
