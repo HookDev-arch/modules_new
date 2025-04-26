@@ -5,3 +5,5 @@ serverinfo
 weather
 ymnow
 quotes
+winkey
+userbotavast
