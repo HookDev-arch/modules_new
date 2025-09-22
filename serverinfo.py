@@ -1,4 +1,4 @@
-__version__ = (2, 0, 1)
+__version__ = (3, 3, 0)
 
 # meta developer: @hookdev_arch
 # meta icon: https://example.com/moodmirror_icon.png
@@ -88,4 +88,5 @@ class serverInfoMod(loader.Module):
         }
 
         await utils.answer(message, self.strings("servinfo").format(**inf))
+
 
