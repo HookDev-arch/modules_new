@@ -32,7 +32,7 @@ class serverInfoMod(loader.Module):
         "servinfo": (
             "<emoji document_id=5271897426117009417>🚘</emoji> <b>Server Info</b>:\n\n"
             "<emoji document_id=5172854840321114816>💻</emoji> <b>CPU:</b> {cpu_name} ({cpu_cores} Cores, {cpu_load}%)\n"
-            "<emoji document_id=5174693704799093859>💻</emoji> <b>RAM:</b> {ram_used} / {ram_total}MB ({ram_percent}%) DDR4\n"
+            "<emoji document_id=5174693704799093859>💻</emoji> <b>RAM:</b> {ram_used} / {ram_total}MB ({ram_percent}%) DIMM\n"
             "<emoji document_id=5172854840321114816>💽</emoji> <b>Disk:</b> {disk_used} / {disk_total}GB ({disk_percent}%) {disk_type}\n"
             "<emoji document_id=5172622400986022463>🎮</emoji> <b>GPU:</b> NVIDIA GeForce RTX 4060 Ti\n"
             "🧠 <b>VRAM:</b> 1.4 / 8.0 GB (dedicated), 1.5 / 23.9 GB (shared)\n"
@@ -50,7 +50,7 @@ class serverInfoMod(loader.Module):
         "servinfo": (
             "<emoji document_id=5271897426117009417>🚘</emoji> <b>Информация о сервере</b>:\n\n"
             "<emoji document_id=5172854840321114816>💻</emoji> <b>Процессор:</b> {cpu_name} ({cpu_cores} ядер, {cpu_load}%)\n"
-            "<emoji document_id=5174693704799093859>💻</emoji> <b>ОЗУ:</b> {ram_used} / {ram_total}MB ({ram_percent}%) DDR4\n"
+            "<emoji document_id=5174693704799093859>💻</emoji> <b>ОЗУ:</b> {ram_used} / {ram_total}MB ({ram_percent}%) DIMM\n"
             "<emoji document_id=5172854840321114816>💽</emoji> <b>Диск:</b> {disk_used} / {disk_total}GB ({disk_percent}%) {disk_type}\n"
             "<emoji document_id=5172622400986022463>🎮</emoji> <b>ГПУ:</b> NVIDIA GeForce RTX 4060 Ti\n"
             "🧠 <b>Видеопамять:</b> 1.4 / 8.0 ГБ (выделенная), 1.5 / 23.9 ГБ (общая)\n"
@@ -88,3 +88,4 @@ class serverInfoMod(loader.Module):
         }
 
         await utils.answer(message, self.strings("servinfo").format(**inf))
+
