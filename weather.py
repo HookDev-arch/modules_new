@@ -1,4 +1,4 @@
-__version__ = (3, 2, 1)
+__version__ = (1, 3, 0)
 
 import logging
 import re
@@ -18,24 +18,24 @@ n = "\n"
 rus = "ёйцукенгшщзхъфывапролджэячсмитьбю"
 
 def escape_ansi(line: str) -> str:
+    """Убираем цветовые коды из ASCII"""
     ansi_escape = re.compile(r"(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]")
     return ansi_escape.sub("", line)
 
-def clean_forecast(raw_text: str) -> str:
-    """Убираем Location, Follow и лишние пустые строки"""
+def clean_ascii(raw_text: str) -> str:
+    """Чистим ответ wttr.in от Location и Follow"""
     lines = escape_ansi(raw_text).splitlines()
-    filtered = []
-    for l in lines:
-        if not l.strip():
-            continue
-        if l.startswith("Location:") or l.startswith("Follow "):
-            continue
-        filtered.append(l)
-    # Берем только первые 7 строк, чтобы не захватывать многодневный прогноз
-    return "\n".join(filtered[:7])
+    filtered = [
+        l for l in lines
+        if l.strip() and not l.startswith("Location:") and not l.startswith("Follow ")
+    ]
+    return "\n".join(filtered)
+
+def choose_lang(city: str) -> str:
+    return "ru" if city and city[0].lower() in rus else "en"
 
 class WeatherMod(loader.Module):
-    """Weather module (short ASCII forecast)"""
+    """Weather module (short ASCII only)"""
 
     strings = {"name": "Weather"}
 
@@ -69,29 +69,28 @@ class WeatherMod(loader.Module):
         )
 
     async def weathercmd(self, message: Message) -> None:
-        """Show short ASCII weather forecast"""
-        city = utils.get_args_raw(message)
-        if not city:
-            city = self.db.get(self.strings["name"], "city", "")
-
+        """Show short ASCII forecast (no location leak)"""
+        city = utils.get_args_raw(message) or self.db.get(self.strings["name"], "city", "")
         if not city:
             await utils.answer(message, "<b>🚫 Город не указан</b>")
             return
 
-        lang = "ru" if city and city[0].lower() in rus else "en"
-        req = requests.get(f"https://wttr.in/{quote_plus(city)}?m&lang={lang}")
-        short = clean_forecast(req.text)
+        lang = choose_lang(city)
+        url = f"https://wttr.in/{quote_plus(city)}?0Fqm&lang={lang}&m"
+        req = requests.get(url, timeout=8)
+        short = clean_ascii(req.text)
         await utils.answer(message, f"<code>{short}</code>")
 
     async def weather_inline_handler(self, query: GeekInlineQuery) -> None:
-        """Inline weather search with short ASCII output"""
+        """Inline search (short ASCII forecast)"""
         args = query.args or self.db.get(self.strings["name"], "city", "")
         if not args:
             return
 
-        lang = "ru" if args and args[0].lower() in rus else "en"
-        req = requests.get(f"https://wttr.in/{quote_plus(args)}?m&lang={lang}")
-        short = clean_forecast(req.text)
+        lang = choose_lang(args)
+        url = f"https://wttr.in/{quote_plus(args)}?0Fqm&lang={lang}&m"
+        req = requests.get(url, timeout=8)
+        short = clean_ascii(req.text)
 
         await query.answer(
             [
