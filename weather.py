@@ -1,4 +1,4 @@
-__version__ = (3, 3, 1)
+__version__ = (3, 4, 0)
 
 import logging
 import re
@@ -17,8 +17,10 @@ logger = logging.getLogger(__name__)
 n = "\n"
 rus = "ёйцукенгшщзхъфывапролджэячсмитьбю"
 
+
 def choose_lang(city: str) -> str:
     return "ru" if city and city[0].lower() in rus else "en"
+
 
 def clean_ascii(raw_text: str) -> str:
     """Очищает ответ wttr.in от Location/Follow и невалидных байтов"""
@@ -33,17 +35,32 @@ def clean_ascii(raw_text: str) -> str:
     ]
     return "\n".join(filtered)
 
+
 def fetch_weather(city: str, lang: str) -> str:
-    """Запрашивает короткий ASCII-прогноз с wttr.in"""
-    url = f"https://wttr.in/{quote_plus(city)}?0Fqm&lang={lang}&m"
+    """Запрашивает короткий ASCII-прогноз с fallback на format=3"""
     try:
+        url = f"https://wttr.in/{quote_plus(city)}?0Fqm&lang={lang}&m"
         r = requests.get(url, timeout=8)
+        cleaned = clean_ascii(r.text)
+        if cleaned.strip():
+            return cleaned
     except requests.RequestException as e:
         return f"⚠ Ошибка запроса: {e}"
-    return clean_ascii(r.text)
+
+    # fallback: берем короткую строку format=3
+    try:
+        r2 = requests.get(f"https://wttr.in/{quote_plus(city)}?format=3&lang={lang}&m", timeout=8)
+        txt = r2.text.strip()
+        if txt:
+            return txt
+    except requests.RequestException:
+        pass
+
+    return "⚠ Нет данных для этого города"
+
 
 class WeatherMod(loader.Module):
-    """Weather module (short ASCII forecast)"""
+    """Weather module (short ASCII with fallback)"""
 
     strings = {"name": "Weather"}
 
@@ -77,32 +94,32 @@ class WeatherMod(loader.Module):
         )
 
     async def weathercmd(self, message: Message) -> None:
-        """Show short ASCII forecast"""
+        """Show short ASCII forecast (with fallback)"""
         city = utils.get_args_raw(message) or self.db.get(self.strings["name"], "city", "")
         if not city:
             await utils.answer(message, "<b>🚫 Город не указан</b>")
             return
 
         lang = choose_lang(city)
-        short = fetch_weather(city, lang)
+        result = fetch_weather(city, lang)
 
-        if not short.strip() or short.startswith("⚠"):
-            await utils.answer(message, f"<b>{short or '⚠ Нет данных для этого города'}</b>")
+        # проверка на пустой или ошибочный ответ
+        if not result.strip() or result.startswith("⚠"):
+            await utils.answer(message, f"<b>{result}</b>")
             return
 
-        await utils.answer(message, f"<code>{short}</code>")
+        await utils.answer(message, f"<code>{result}</code>")
 
     async def weather_inline_handler(self, query: GeekInlineQuery) -> None:
-        """Inline search (short ASCII forecast)"""
+        """Inline search (short ASCII with fallback)"""
         args = query.args or self.db.get(self.strings["name"], "city", "")
         if not args:
             return
 
         lang = choose_lang(args)
-        short = fetch_weather(args, lang)
-
-        if not short.strip() or short.startswith("⚠"):
-            short = short or "⚠ Нет данных для этого города"
+        result = fetch_weather(args, lang)
+        if not result.strip():
+            result = "⚠ Нет данных для этого города"
 
         await query.answer(
             [
@@ -111,7 +128,7 @@ class WeatherMod(loader.Module):
                     title=f"Forecast for {args}",
                     description="Short ASCII forecast",
                     input_message_content=InputTextMessageContent(
-                        f"<code>{short}</code>",
+                        f"<code>{result}</code>",
                         parse_mode="HTML",
                     ),
                 )
