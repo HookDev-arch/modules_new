@@ -1,4 +1,4 @@
-__version__ = (1, 1, 0)
+__version__ = (3, 2, 0)
 
 # █████   █████                   █████      ██████████                                                                █████     
 #░░███   ░░███                   ░░███      ░░███░░░░███                                                              ░░███      
@@ -32,14 +32,13 @@ logger = logging.getLogger(__name__)
 n = "\n"
 rus = "ёйцукенгшщзхъфывапролджэячсмитьбю"
 
-
-def escape_ansi(line):
+def escape_ansi(line: str) -> str:
+    """Убираем ANSI-коды цветов и управляющие символы"""
     ansi_escape = re.compile(r"(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]")
     return ansi_escape.sub("", line)
 
-
 class WeatherMod(loader.Module):
-    """Weather module"""
+    """Weather module (short ASCII forecast)"""
 
     strings = {"name": "Weather"}
 
@@ -72,37 +71,43 @@ class WeatherMod(loader.Module):
                 f"<code>{self.db.get(self.strings['name'], 'city', '🚫 Not specified')}</code></b>"
             ),
         )
-        return
 
     async def weathercmd(self, message: Message) -> None:
-        """Current forecast for provided city"""
+        """Show short ASCII weather forecast"""
         city = utils.get_args_raw(message)
         if not city:
             city = self.db.get(self.strings["name"], "city", "")
 
+        if not city:
+            await utils.answer(message, "<b>🚫 Город не указан</b>")
+            return
+
         lang = "ru" if city and city[0].lower() in rus else "en"
-        req = requests.get(f"https://wttr.in/{city}?m&T&lang={lang}")
-        await utils.answer(message, f"<code>{n.join(req.text.splitlines()[:7])}</code>")
+        req = requests.get(f"https://wttr.in/{quote_plus(city)}?m&lang={lang}")
+        text = escape_ansi(req.text)
+        short = "\n".join(text.splitlines()[:7])
+
+        await utils.answer(message, f"<code>{short}</code>")
 
     async def weather_inline_handler(self, query: GeekInlineQuery) -> None:
-        """Search city"""
-        args = query.args
-        if not args:
-            args = self.db.get(self.strings["name"], "city", "")
-
+        """Inline weather search with short ASCII output"""
+        args = query.args or self.db.get(self.strings["name"], "city", "")
         if not args:
             return
 
         lang = "ru" if args and args[0].lower() in rus else "en"
-        req = requests.get(f"https://wttr.in/{quote_plus(args)}?format=3")
+        req = requests.get(f"https://wttr.in/{quote_plus(args)}?m&lang={lang}")
+        text = escape_ansi(req.text)
+        short = "\n".join(text.splitlines()[:7])
+
         await query.answer(
             [
                 InlineQueryResultArticle(
                     id=rand(20),
                     title=f"Forecast for {args}",
-                    description=req.text,
+                    description="Short ASCII forecast",
                     input_message_content=InputTextMessageContent(
-                        f'<code>{n.join(requests.get(f"https://wttr.in/{args}?m&T&lang={lang}").text.splitlines()[:7])}</code>',
+                        f"<code>{short}</code>",
                         parse_mode="HTML",
                     ),
                 )
