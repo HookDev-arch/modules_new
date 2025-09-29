@@ -1,19 +1,4 @@
-__version__ = (3, 2, 0)
-
-# █████   █████                   █████      ██████████                                                                █████     
-#░░███   ░░███                   ░░███      ░░███░░░░███                                                              ░░███      
-# ░███    ░███   ██████   ██████  ░███ █████ ░███   ░░███  ██████  █████ █████             ██████   ████████   ██████  ░███████  
-# ░███████████  ███░░███ ███░░███ ░███░░███  ░███    ░███ ███░░███░░███ ░░███  ██████████ ░░░░░███ ░░███░░███ ███░░███ ░███░░███ 
-# ░███░░░░░███ ░███ ░███░███ ░███ ░██████░   ░███    ░███░███████  ░███  ░███ ░░░░░░░░░░   ███████  ░███ ░░░ ░███ ░░░  ░███ ░███ 
-# ░███    ░███ ░███ ░███░███ ░███ ░███░░███  ░███    ███ ░███░░░   ░░███ ███              ███░░███  ░███     ░███  ███ ░███ ░███ 
-# █████   █████░░██████ ░░██████  ████ █████ ██████████  ░░██████   ░░█████              ░░████████ █████    ░░██████  ████ █████
-#░░░░░   ░░░░░  ░░░░░░   ░░░░░░  ░░░░ ░░░░░ ░░░░░░░░░░    ░░░░░░     ░░░░░                ░░░░░░░░ ░░░░░      ░░░░░░  ░░░░ ░░░░░                                                                                                                                 
-# meta developer: @hookdev_arch
-# meta icon: https://example.com/moodmirror_icon.png
-# meta banner: https://i.yapx.ru/Yk4OQ.jpg
-
-# scope: inline_content
-# requires: requests
+__version__ = (3, 2, 1)
 
 import logging
 import re
@@ -33,9 +18,21 @@ n = "\n"
 rus = "ёйцукенгшщзхъфывапролджэячсмитьбю"
 
 def escape_ansi(line: str) -> str:
-    """Убираем ANSI-коды цветов и управляющие символы"""
     ansi_escape = re.compile(r"(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]")
     return ansi_escape.sub("", line)
+
+def clean_forecast(raw_text: str) -> str:
+    """Убираем Location, Follow и лишние пустые строки"""
+    lines = escape_ansi(raw_text).splitlines()
+    filtered = []
+    for l in lines:
+        if not l.strip():
+            continue
+        if l.startswith("Location:") or l.startswith("Follow "):
+            continue
+        filtered.append(l)
+    # Берем только первые 7 строк, чтобы не захватывать многодневный прогноз
+    return "\n".join(filtered[:7])
 
 class WeatherMod(loader.Module):
     """Weather module (short ASCII forecast)"""
@@ -45,7 +42,6 @@ class WeatherMod(loader.Module):
     async def client_ready(self, client, db) -> None:
         if hasattr(self, "hikka"):
             return
-
         self.db = db
         self.client = client
         try:
@@ -84,9 +80,7 @@ class WeatherMod(loader.Module):
 
         lang = "ru" if city and city[0].lower() in rus else "en"
         req = requests.get(f"https://wttr.in/{quote_plus(city)}?m&lang={lang}")
-        text = escape_ansi(req.text)
-        short = "\n".join(text.splitlines()[:7])
-
+        short = clean_forecast(req.text)
         await utils.answer(message, f"<code>{short}</code>")
 
     async def weather_inline_handler(self, query: GeekInlineQuery) -> None:
@@ -97,8 +91,7 @@ class WeatherMod(loader.Module):
 
         lang = "ru" if args and args[0].lower() in rus else "en"
         req = requests.get(f"https://wttr.in/{quote_plus(args)}?m&lang={lang}")
-        text = escape_ansi(req.text)
-        short = "\n".join(text.splitlines()[:7])
+        short = clean_forecast(req.text)
 
         await query.answer(
             [
